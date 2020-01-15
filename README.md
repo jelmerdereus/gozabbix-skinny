@@ -13,22 +13,30 @@ func main() {
 	err := zabbix.Signin("zbx_api_user", "AP!Monkii")
 	if err != nil {
 		log.Fatal(err)
-    }
-    
-    // get the Zabbix version
-	zabbixResponse, err := zabbix.Call("apiinfo.version", []string{}, false)
+	}
+
+	// get Zabbix version (withAuthentication: false)
+	APIVersion, err := zabbix.Call("apiinfo.version", []string{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-    fmt.Printf("Version of Zabbix: %s\n", zabbixResponse.Result)
-    
-    // get details about the hosts
-	zabbixResponse, err = zabbix.Call("host.get", []string{}, true)
+	fmt.Printf("Zabbix version: %s\n\n", APIVersion.Result)
+
+	// get Zabbix host details
+	zabbixHosts, err := zabbix.Call("host.get", []string{}, true)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Hosts in Zabbix: %#v\n", zabbixResponse.Result)
+	if zabbixHostList, ok := zabbixHosts.Result.([]interface{}); ok {
+		fmt.Println("Hosts in Zabbix:")
+
+		for _, host := range zabbixHostList {
+			if hostMap, ok := host.(map[string]interface{}); ok {
+				fmt.Printf("id: %s | name: %s | status: %s\n", hostMap["hostid"], hostMap["host"], hostMap["status"])
+			}
+		}
+	}
 }
 ```
