@@ -5,7 +5,10 @@ usage:
 
 ```go
 import (
-    gozabbix "github.com/jelmerdereus/gozabbix-skinny"
+	"fmt"
+	"log"
+
+	gozabbix "github.com/jelmerdereus/gozabbix-skinny"
 )
 
 func main() {
@@ -15,26 +18,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// get Zabbix version (withAuthentication: false)
-	APIVersion, err := zabbix.Call("apiinfo.version", []string{}, false)
+	// get Zabbix version
+	resp, err := zabbix.Call("apiinfo.version", []string{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Zabbix version: %s\n\n", APIVersion.Result)
+	if APIVersion, ok := resp.Result.(string); ok {
+		fmt.Printf("Version of Zabbix: %s\n\n", APIVersion)
+	}
 
 	// get Zabbix host details
-	zabbixHosts, err := zabbix.Call("host.get", []string{}, true)
+	resp, err = zabbix.Call("host.get", []string{}, true)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if zabbixHostList, ok := zabbixHosts.Result.([]interface{}); ok {
+	if hostList, ok := resp.Result.([]interface{}); ok {
 		fmt.Println("Hosts in Zabbix:")
 
-		for _, host := range zabbixHostList {
-			if hostMap, ok := host.(map[string]interface{}); ok {
-				fmt.Printf("id: %s | name: %s | status: %s\n", hostMap["hostid"], hostMap["host"], hostMap["status"])
+		for _, host := range hostList {
+			if details, ok := host.(map[string]interface{}); ok {
+				fmt.Printf("| id: %s | name: %s | status: %s |\n", details["hostid"], details["host"], details["status"])
 			}
 		}
 	}
